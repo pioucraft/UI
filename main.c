@@ -47,16 +47,18 @@ void parseToHTML(struct containerElement* container, char** html) {
 }
 
 int main() {
-    // test the parseToHTML function with a simple container that contains one text element
     struct textElement text1 = {"Hello, World!"};
+
     void** elements = malloc(sizeof(void*) * 1);
     struct element elem1 = {TEXT_TYPE, &text1};
     elements[0] = &elem1;
+
     struct containerElement container = {
         elements,
         1,
-        ROW_DIRECTION
+        COLUMN_DIRECTION 
     };
+
     char* html = malloc(1024);
     parseToHTML(&container, &html);
     printf("%s\n", html);
