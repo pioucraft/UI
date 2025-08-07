@@ -4,7 +4,7 @@
 int main() {
   // Move cursor to row 5, col 10
   printf("\033[3J");
-  printf("\033[5;10H");
+  printf("\033[0;0H");
   printf("Hello, TUI world!");
 
   // Flush stdout

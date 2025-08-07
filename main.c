@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #define ROW_DIRECTION 'r'
 #define COLUMN_DIRECTION 'c'
@@ -8,8 +10,9 @@
 #define CONTAINER_TYPE 'c'
 #define TEXT_TYPE 't'
 
-int terminalWidth;
-int terminalHeight;
+struct winsize terminalSize;
+// idea : instad of a double pointer, use a triple pointer (row, column, symbol (that can take one or multiple characters... hehe))
+char** TUIString;
 
 struct element {
     char type; // "c" for container, "t" for text
@@ -48,16 +51,55 @@ void parseToHTML(struct containerElement* container, char** html) {
     strcat(*html, "</div>");
 }
 
-void parseToTUI(struct containerElement* container) {
+void parseToTUI(struct containerElement* container, int currentAvailableWidth, int startRow, int startColumn) {
+    int currentColumn = startColumn;
+
+    if (container->direction == COLUMN_DIRECTION) {
+        for (int i = 0; i < container->numElements; i++) {
+            struct element* elem = (struct element*)container->elements[i];
+            if(elem->type == CONTAINER_TYPE) {
+                struct containerElement* childContainer = (struct containerElement*)elem->data;
+                parseToTUI(childContainer, currentAvailableWidth, startRow, currentColumn);
+            } else if (elem->type == TEXT_TYPE) {
+                struct textElement* textElem = (struct textElement*)elem->data;
+                for (int j = 0; j < strlen(textElem->text); j++) {
+
+                }
+            }
+        }
+    }
 }
 
-void getTerminalSize(int* width, int* height) {
-    // get the terminal size using system calls or libraries 
+void getTerminalSize() {
+    if (ioctl(0, TIOCGWINSZ, &terminalSize) == -1) {
+        perror("ioctl");
+        exit(EXIT_FAILURE);
+    }
+}
 
+void resetTUIString() {
+    TUIString = malloc(sizeof(char*) * terminalSize.ws_row);
+    for (int i = 0; i < terminalSize.ws_row; i++) {
+        TUIString[i] = malloc(terminalSize.ws_col + 1);
+        memset(TUIString[i], ' ', terminalSize.ws_col);
+        TUIString[i][terminalSize.ws_col] = '\0'; // Null-terminate
+    }
+}
+
+void printTUIString() {
+    printf("\033[3J");
+    printf("\033[0;0H");
+    for (int i = 0; i < terminalSize.ws_row; i++) {
+        printf("%s", TUIString[i]);
+    }
+    printf("\e[?25l");
+    fflush(stdout);
 }
 
 int main() {
-    getTerminalSize(&terminalWidth, &terminalHeight);
+    getTerminalSize();
+    resetTUIString();
+    printf("\e[?25h");
 
     struct textElement text1 = {"Hello, World!"};
     struct element elem1 = {TEXT_TYPE, &text1};
@@ -77,7 +119,9 @@ int main() {
     };
 
     char* html = malloc(1024);
-    parseToTUI(&container);
+    int currentAvailableWidth = terminalSize.ws_col;
+    parseToTUI(&container, currentAvailableWidth, 0, 0);
+    sleep(2);
 }
 
 
