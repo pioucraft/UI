@@ -8,6 +8,9 @@
 #define CONTAINER_TYPE 'c'
 #define TEXT_TYPE 't'
 
+int terminalWidth;
+int terminalHeight;
+
 struct element {
     char type; // "c" for container, "t" for text
     void* data;
@@ -24,7 +27,6 @@ struct textElement {
 };
 
 void parseToHTML(struct containerElement* container, char** html) {
-    printf("%s\n", *html);
     if (container->direction == ROW_DIRECTION) {
         strcat(*html, "<div style='display: flex; flex-direction: row;'>");
     } else if (container->direction == COLUMN_DIRECTION) {
@@ -46,22 +48,36 @@ void parseToHTML(struct containerElement* container, char** html) {
     strcat(*html, "</div>");
 }
 
-int main() {
-    struct textElement text1 = {"Hello, World!"};
+void parseToTUI(struct containerElement* container) {
+}
 
-    void** elements = malloc(sizeof(void*) * 1);
+void getTerminalSize(int* width, int* height) {
+    // get the terminal size using system calls or libraries 
+
+}
+
+int main() {
+    getTerminalSize(&terminalWidth, &terminalHeight);
+
+    struct textElement text1 = {"Hello, World!"};
     struct element elem1 = {TEXT_TYPE, &text1};
+
+    struct textElement text2 = {"This is a test."};
+    struct element elem2 = {TEXT_TYPE, &text2};
+
+    void** elements = malloc(sizeof(void*) * 2);
+
     elements[0] = &elem1;
+    elements[1] = &elem2;
 
     struct containerElement container = {
         elements,
-        1,
+        2,
         COLUMN_DIRECTION 
     };
 
     char* html = malloc(1024);
-    parseToHTML(&container, &html);
-    printf("%s\n", html);
+    parseToTUI(&container);
 }
 
 
